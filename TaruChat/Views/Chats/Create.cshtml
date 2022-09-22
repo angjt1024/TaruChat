@@ -1,0 +1,228 @@
+﻿@model TaruChat.Models.Chat
+
+@{
+    ViewData["Title"] = "Create";
+}
+
+<h1>Create</h1>
+
+<h4>Chat</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Create">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-group">
+                <label asp-for="ID" class="control-label"></label>
+                <input asp-for="ID" class="form-control" />
+                <span asp-validation-for="ID" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Title" class="control-label"></label>
+                <input asp-for="Title" class="form-control" />
+                <span asp-validation-for="Title" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="CreatedAt" class="control-label"></label>
+                <input asp-for="CreatedAt" class="form-control" />
+                <span asp-validation-for="CreatedAt" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="UpdatedAt" class="control-label"></label>
+                <input asp-for="UpdatedAt" class="form-control" />
+                <span asp-validation-for="UpdatedAt" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="DeletedAt" class="control-label"></label>
+                <input asp-for="DeletedAt" class="form-control" />
+                <span asp-validation-for="DeletedAt" class="text-danger"></span>
+            </div>
+            <div>
+                <label id="upload" class="upload">
+                    <P class="pull-left">Profile Picture</P>
+                    <input type="file" id="upload_image" accept="image/jpeg,image/png" hidden />
+                    <img class="img-thumbnail" id="item-img-output">
+                </label>
+                <input asp-for="ProfilePic" class="form-control" hidden />
+                <small class="text-danger text-lg-left">Click image to edit photo..</small>
+                <span asp-validation-for="ProfilePic" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <div class="col-md-offset-2 col-md-10">
+                    <table>
+                        <tr>
+                            @{
+                                int cnt = 0;
+                                List<TaruChat.Models.ChatViewModels.EnrolledUserData> users = ViewBag.Users;
+
+                                foreach (var user in users)
+                                {
+                                    if (cnt++ % 1 == 0)
+                                    {
+                                    @:</tr><tr>
+                                    }
+                                    @:<td>
+                                        <input type="checkbox"
+                                               name="selectedUsers"
+                                               value="@user.UserID"
+                                               @(Html.Raw(user.Enrolled ? "checked=\"checked\"" : "")) />
+                                        @user.UserID @:  @user.Name
+                                    @:</td>
+                                }
+                            @:</tr>
+                            }
+                        </table>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <input type="submit" value="Create" class="btn btn-primary" />
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <div id="uploadimageModal" class="modal" role="dialog">
+        <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal">&times;</button>
+            <h4 class="modal-title">Crop Your Image</h4>
+        </div>
+        <div class="modal-body">
+            <div id="image_demo" style="width:350px; margin-top:30px"></div>
+            <button class="btn btn-success" id="rotateLeft" data-deg="-90">Rotate Left</button>
+            <button class="btn btn-success crop_image">Crop</button>
+            <button class="btn btn-success" id="rotateRight" data-deg="90">Rotate Right</button>
+        </div>
+    </div>
+
+    <div>
+        <a asp-action="Index">Back to List</a>
+    </div>
+
+    @section Scripts {
+        @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+        <link href="~/css/croppie.css" rel="stylesheet" />
+        <style>
+
+            .validation-summary-errors,
+            .field-validation-error {
+                color: red;
+            }
+
+            .upload {
+                display: block;
+            }
+
+                .upload img {
+                    display: block;
+                    border: 1px solid #333;
+                    width: 200px;
+                    height: 200px;
+                    object-fit: cover;
+                }
+
+            .panel-heading {
+                border: 1px solid red;
+            }
+
+            .panel-body {
+                border: 1px solid black;
+            }
+
+            #uploadimageModal {
+                position: fixed;
+                margin-left: auto;
+                margin-right: auto;
+                left: 0;
+                right: 0;
+                width: 600px;
+                background-color: white;
+                height: 600px;
+            }
+
+            .modal-header {
+                display: block;
+                position: relative;
+                border: 1px solid gray;
+            }
+
+                .modal-header .modal-title {
+                    text-align: center;
+                }
+
+                .modal-header .close {
+                    position: absolute;
+                    right: 0;
+                    top: 0;
+                }
+
+            .modal-body {
+                display: inline-block;
+                vertical-align: top;
+                border: 1px solid black;
+                height: 450px;
+                width: 100%;
+                text-align: center;
+            }
+        </style>
+
+        <script src="~/js/croppie.js"></script>
+        <script src="~/js/croppie.min.js"></script>
+        <script>
+
+            $image_crop = $('#image_demo').croppie({
+                enableExif: true,
+                viewport: {
+                    width: 200,
+                    height: 200,
+                    type: 'square'
+                },
+                boundary: {
+                    width: 300,
+                    height: 300
+                },
+                enableOrientation: true
+            });
+
+            $('#upload_image').on('change', function () {
+                var reader = new FileReader();
+                reader.onload = function (event) {
+
+                    $image_crop.croppie('bind', {
+                        url: event.target.result
+                    }).then(function () {
+                        console.log('jQuery bind complete');
+                    });
+                }
+                reader.readAsDataURL(this.files[0]);
+                $('#uploadimageModal').modal('show');
+            });
+
+            $('.crop_image').on('click', function (event) {
+                $image_crop.croppie('result', {
+                    type: 'base64',
+                    format: 'jpeg',
+                    //type: 'canvas',
+                    size: 'viewport'
+                    //size: {width: 150, height: 200}
+                }).then(function (response) {
+                    $('#ProfilePic').val(response);
+                    $('#item-img-output').attr('src', response);
+                    $('#imgCropped').val(response);
+                    console.log(response);
+                    $('#uploadimageModal').modal('hide');
+                });
+            });
+
+            $("#rotateLeft").click(function () {
+                $image_crop.croppie('rotate', parseInt($(this).data('deg')));
+            });
+
+            $("#rotateRight").click(function () {
+                $image_crop.croppie('rotate', parseInt($(this).data('deg')));
+            });
+
+        </script>
+    }

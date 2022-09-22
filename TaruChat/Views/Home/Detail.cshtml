@@ -1,0 +1,223 @@
+﻿@model TaruChat.Models.ChatViewModels.UserDetailModel
+
+@{
+    ViewData["Title"] = "Detail";
+}
+
+
+
+<div style="width: 100%; display: flex; align-items: center; justify-content: space-between">
+    <h4>Profile</h4>
+
+    <div>
+        <i class="fa fa-angle-double-left" aria-hidden="true"></i>
+        <a asp-action="Index">Back</a>
+    </div>
+</div>
+
+<div style="width: 100%; display:flex; justify-content: center;">
+    <div class="profile-box">
+        <div>
+            <form enctype="multipart/form-data" asp-action="Detail">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                <div class="form-group">
+                    <div class="text-center" style="display: flex; align-items: center; flex-direction: column;">
+                        <div style="display: flex; flex-direction: column; ">
+                            <label id="upload" class="upload">
+                                <span>Profile Picture</span>
+                                <input type="file" id="upload_image" accept="image/jpeg,image/png" hidden />
+                                <span>
+                                    <img class="img-thumbnail" id="item-img-output" src="@Model.ProfilePic">
+                                </span>
+                            </label>
+                        </div>
+
+                        <input asp-for="ProfilePic" class="form-control" hidden />
+                        <small class="text-danger text-lg-left">Click image to edit photo..</small>
+                        <span asp-validation-for="ProfilePic" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="Name" class="control-label"></label>
+                    <input asp-for="Name" class="form-control" style="background-color: #f7fbff" />
+                    <span asp-validation-for="Name" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="Email" class="control-label"></label>
+                    <input asp-for="Email" class="form-control" style="background-color: #f7fbff" />
+                    <span asp-validation-for="Email" class="text-danger"></span>
+                </div>
+                <div class="form-group">
+                    <label asp-for="Gender" class="control-label"></label>
+                    <input asp-for="Gender" class="form-control" style="background-color: #f7fbff" />
+                    <span asp-validation-for="Gender" class="text-danger"></span>
+                </div>
+                <a asp-action="Reset">Reset Password</a>
+
+                <div class="form-group" style="display: flex; justify-content: center; margin-top: 20px;">
+                    <input type="submit" value="Save" class="btn btn-primary text-white" style="width: 20%" />
+                </div>
+
+
+            </form>
+        </div>
+
+        <div id="uploadimageModal" class="modal" role="dialog">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title">Crop Your Image</h4>
+            </div>
+            <div class="modal-body">
+                <div id="image_demo" style="width:350px; margin-top:30px"></div>
+                <button class="btn btn-success" id="rotateLeft" data-deg="-90">Rotate Left</button>
+                <button class="btn btn-success crop_image">Crop</button>
+                <button class="btn btn-success" id="rotateRight" data-deg="90">Rotate Right</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+
+    <link href="~/css/croppie.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" />
+    <style>
+        .profile-box {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            width: 60%;
+            border-radius: 30px;
+            padding: 20px;
+            box-shadow: 0px 0px 5px 5px #eae1e1;
+        }
+
+        .validation-summary-errors,
+        .field-validation-error {
+            color: red;
+        }
+
+        .upload {
+            display: block;
+        }
+
+            .upload img {
+                display: block;
+                border: 1px solid #333;
+                width: 200px;
+                height: 200px;
+                object-fit: cover;
+            }
+
+        .panel-heading {
+            border: 1px solid red;
+        }
+
+        .panel-body {
+            border: 1px solid black;
+        }
+
+        #uploadimageModal {
+            position: fixed;
+            margin-left: auto;
+            margin-right: auto;
+            left: 0;
+            right: 0;
+            width: 600px;
+            background-color: white;
+            height: 600px;
+        }
+
+        .modal-header {
+            display: block;
+            position: relative;
+            border: 1px solid gray;
+        }
+
+            .modal-header .modal-title {
+                text-align: center;
+            }
+
+            .modal-header .close {
+                position: absolute;
+                right: 0;
+                top: 0;
+            }
+
+        .modal-body {
+            display: inline-block;
+            vertical-align: top;
+            border: 1px solid black;
+            height: 450px;
+            width: 100%;
+            text-align: center;
+        }
+    </style>
+
+    <script src="~/js/croppie.js"></script>
+    <script src="~/js/croppie.min.js"></script>
+    <script>
+
+        $image_crop = $('#image_demo').croppie({
+            enableExif: true,
+            viewport: {
+                width: 200,
+                height: 200,
+                type: 'square'
+            },
+            boundary: {
+                width: 300,
+                height: 300
+            },
+            enableOrientation: true
+        });
+
+        $('#upload_image').on('change', function () {
+            var reader = new FileReader();
+            reader.onload = function (event) {
+
+                $image_crop.croppie('bind', {
+                    url: event.target.result
+                }).then(function () {
+                    console.log('jQuery bind complete');
+                });
+            }
+            reader.readAsDataURL(this.files[0]);
+            $('#uploadimageModal').modal('show');
+        });
+
+        $('.crop_image').on('click', function (event) {
+            $image_crop.croppie('result', {
+                type: 'base64',
+                format: 'jpeg',
+                //type: 'canvas',
+                size: 'viewport'
+                //size: {width: 150, height: 200}
+            }).then(function (response) {
+                $('#ProfilePic').val(response);
+                $('#item-img-output').attr('src', response);
+                $('#imgCropped').val(response);
+                console.log(response);
+                $('#uploadimageModal').modal('hide');
+            });
+        });
+
+        $("#rotateLeft").click(function () {
+            $image_crop.croppie('rotate', parseInt($(this).data('deg')));
+        });
+
+        $("#rotateRight").click(function () {
+            $image_crop.croppie('rotate', parseInt($(this).data('deg')));
+        });
+
+        $.validator.setDefaults({
+            ignore: ''
+        });
+
+
+    </script>
+}

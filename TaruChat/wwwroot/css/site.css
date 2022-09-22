@@ -1,0 +1,140 @@
+﻿/* Please see documentation at https://docs.microsoft.com/aspnet/core/client-side/bundling-and-minification
+for details on configuring this project to bundle and minify static web assets. */
+
+a.navbar-brand {
+  white-space: normal;
+  text-align: center;
+  word-break: break-all;
+}
+
+/* Provide sufficient contrast against white background */
+a {
+  color: #0366d6;
+}
+
+.btn-primary {
+  color: #fff;
+  background-color: #1b6ec2;
+  border-color: #1861ac;
+}
+
+.nav-pills .nav-link.active, .nav-pills .show > .nav-link {
+  color: #fff;
+  background-color: #1b6ec2;
+  border-color: #1861ac;
+}
+
+/* Sticky footer styles
+-------------------------------------------------- */
+html {
+  font-size: 14px;
+}
+@media (min-width: 768px) {
+  html {
+    font-size: 16px;
+  }
+}
+
+.border-top {
+  border-top: 1px solid #e5e5e5;
+}
+.border-bottom {
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.box-shadow {
+  box-shadow: 0 .25rem .75rem rgba(0, 0, 0, .05);
+}
+
+button.accept-policy {
+  font-size: 1rem;
+  line-height: inherit;
+}
+
+/* Sticky footer styles
+-------------------------------------------------- */
+html {
+  position: relative;
+  min-height: 100%;
+}
+
+body {
+  /* Margin bottom by footer height */
+  margin-bottom: 60px;
+}
+.footer {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  white-space: nowrap;
+  line-height: 60px; /* Vertically center the text there */
+}
+
+/* Flash message -------------------------------------------------------------- */
+.error:not(:empty) {
+    position: relative;
+    /*position: absolute;*/
+    background: #5a068c;
+    color: white;
+    border-radius: 5px;
+    padding: 10px 20px;
+    max-width: 500px;
+    transform: translate(-50%);
+    opacity: 0;
+    animation: fade 4s linear 0s 1 normal;
+}
+
+@keyframes fade {
+    0% {
+        left: -100px;
+        opacity: 0;
+    }
+
+    10% {
+        left: 45%;
+        opacity: 1;
+    }
+
+    90% {
+        left: 50%;
+        opacity: 1;
+    }
+
+    100% {
+        left: 80%;
+        opacity: 0;
+    }
+}
+
+/*Login*/
+
+#login .container #login-row #login-column #login-box #login-form {
+  padding: 20px;
+}
+#login .container #login-row #login-column #login-box #login-form #register-link {
+  margin-top: -85px;
+}
+
+/*Avatar*/
+.circle {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    overflow: hidden;
+    text-align: center;
+    border: 3px solid white;
+    background-color: white;
+}
+
+.circle img {
+    object-fit: cover;
+}
+
+.circle:hover {
+    opacity: 0.5;
+    cursor: pointer;
+}
+
+.avatar:fullscreen {
+    object-fit: scale-down;
+}

@@ -1,0 +1,763 @@
+﻿@model TaruChat.Models.ChatViewModels.MessageViewModel
+@using Microsoft.AspNetCore.Http;
+
+@{ Layout = null; }
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>TaruChat</title>
+    <link rel="stylesheet" href="~/css/boostrap4.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.3.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="~/bootstrap3.3/css/bootstrap.min.css">
+    <link rel="stylesheet" href="~/css/emojibuttonlistjs.css" />
+    <link rel="stylesheet" href="~/css/chat.css" />
+    <link rel="stylesheet" href="~/css/croppie.css" />
+    <script src="~/bootstrap3.3/js/jquery-3.3.1.min.js"></script>
+    <script src="~/bootstrap3.3/js/bootstrap.min.js"></script>
+
+
+    <style>
+        /*canvas*/
+        #box {
+            border: 1px solid #999;
+            width: 35px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #pen {
+            background: #000;
+            border: 1px solid #000;
+            border-radius: 50%;
+            width: 5px;
+            height: 5px;
+        }
+
+
+        #size {
+            flex: 1 1 auto;
+        }
+
+        #color {
+            width: 60px;
+            height: 20px;
+        }
+
+        #canvas {
+            display: block;
+            border: 1px solid #999;
+            touch-action: none;
+            user-select: none;
+            grid-auto-flow: row;
+            grid-template-rows: min-content min-content;
+        }
+
+        /* JENTAT */
+        #coord {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Camera*/
+        #my_camera {
+            width: 320px;
+            height: 240px;
+            border: 1px solid black;
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <div id="app" class="app">
+
+        <!-- LEFT SECTION -->
+        <section id="main-left" class="main-left">
+            <!-- header -->
+            <div id="header-left" class="header-left">
+                <span style="color: white; align-self: center; font-weight: bold; padding-left: 10px; font-size: 20px;">TaruChat</span>
+                @*<span class="glyphicon glyphicon-menu-hamburger hamburger-btn"></span>
+                <span class="glyphicon glyphicon-search search-btn"></span>
+                <span class="glyphicon glyphicon-option-vertical option-btn"></span>*@
+            </div>
+
+            <!-- chat list -->
+            <div id="chat-list" class="chat-list">
+                <!-- user lists -->
+                @foreach (var item in Model.User.Enrollments)
+                {
+                    <a style="text-decoration: none" asp-controller="Taruchat" asp-route-id="@item.ChatID">
+                        <div id="friends" class="friends">
+                            <!-- photo -->
+                            <div class="profile friends-photo">
+                                <img src="@item.Chat.ProfilePic" alt="">
+                            </div>
+
+                            <div class="friends-credent">
+                                <!-- name -->
+
+                                <span class="friends-name">@item.Chat.Title</span>
+                                <!-- last message -->
+                                <span id="@item.ChatID" class="friends-message">
+                                    @foreach (var message in Model.Messages.Reverse())
+                                    {
+                                        if (message.ChatID == item.Chat.ID)
+                                        {
+                                            foreach (var chatRoom in message.Chat.Enrollments)
+                                            {
+                                                if (chatRoom.User.ID == message.UserID)
+                                                {
+                                                    if (message.MessageType == "Image")
+                                                    {
+                                                        @chatRoom.User.Name <t>: Sent an Image</t> <br />
+                                                    }
+
+
+                                                    else if (message.MessageType == "Document")
+                                                    {
+                                                        @chatRoom.User.Name <t>: Sent a Document </t> <br />
+                                                    }
+
+                                                    else if (message.MessageType == "Video")
+                                                    {
+                                                        @chatRoom.User.Name <t>: Sent a Youtube Video </t> <br />
+                                                    }
+
+                                                    else if (message.MessageType == "Text")
+                                                    {
+                                                        @chatRoom.User.Name <t>: </t>@message.Word <br />
+                                                    }
+                                                    else if (message.MessageType == "Audio")
+                                                    {
+                                                        @chatRoom.User.Name <t>: Sent a Voice Message</t> <br />
+                                                    }
+                                                    else if (message.MessageType == "CamVideo")
+                                                    {
+                                                        @chatRoom.User.Name <t>: Sent a Video</t> <br />
+                                                    }
+
+                                                }
+                                            }
+                                            break;
+                                        }
+                                    }
+                                </span>
+                            </div>
+                            <!-- notification badge -->
+                            <span id="@item.ChatID-notify" class="badge notif-badge"></span>
+                        </div>
+                    </a>
+                }
+            </div>
+
+            <!-- self-profile -->
+            <div id="self-info" class="self-info">
+                <!-- photo -->
+                <div class="profile your-photo">
+                    <img id="profile" src="@Model.User.ProfilePic" alt="">
+                </div>
+                <!-- name -->
+                <h4 class="name your-name">@Model.User.Name</h4>
+                <!-- setting btn -->
+                <div class="btn-group dropup">
+
+                    <span class="glyphicon glyphicon-cog" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></span>
+
+                    <div class="dropdown-menu">
+                        <!-- Dropdown menu links -->
+                        <a class="dropdown-item" asp-controller="Home" asp-action="Detail">Profile</a>
+                        <a class="dropdown-item" asp-controller="Home" asp-action="Logout">Log Out</a>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+
+
+        <!-- RIGHT SECTION -->
+        @if (Model.Chat != null)
+        {
+            <section id="main-right" class="main-right">
+                <!-- header -->
+                <div id="header-right" class="header-right">
+                    <!-- profile pict -->
+                    <div id="header-img" class="profile header-img">
+                        <img src="@Model.Chat.ProfilePic" alt="">
+                    </div>
+
+                    <!-- name -->
+                    <h4 class="name friend-name">@Model.Chat.Title</h4>
+
+                    <!-- some btn -->
+                    <div class="some-btn">
+                        <span class="glyphicon glyphicon-option-vertical option-btn" data-toggle="modal" data-target="#userModal"></span>
+                    </div>
+                </div>
+
+                <!-- chat area -->
+                <div id="chat-area" class="chat-area">
+                    <!-- chat content -->
+                    <!-- ALL CHAT TEMPLATE -->
+                    @foreach (var item in Model.Messages)
+                    {
+                        if (item.ChatID == Model.Chat.ID)
+                        {
+                            if (item.UserID == Model.User.ID)
+                            {
+                                <div id="your-chat" class="your-chat">
+                                    @if (item.MessageType == "Image")
+                                    {
+                                        <img src="@Html.DisplayFor(modelItem => item.Word)" class="your-chat-image" />
+                                    }
+                                    else if (item.MessageType == "Document")
+                                    {
+                                        <p class="your-chat-balloon"><a href="@Html.DisplayFor(modelItem => item.Word)" style="color:plum;" target="_blank" download="Document">Download the document</a></p>
+                                    }
+                                    else if (item.MessageType == "Video")
+                                    {
+                                        <iframe class="your-chat-video" width="400" height="300"
+                                                src="https://www.youtube.com/embed/@Html.DisplayFor(modelItem => item.AttachmentURL)"
+                                                frameborder="0"
+                                                allow="accelerometer; autoplay; clipboard-write; encrypted-media;
+                                                gyroscope; picture-in-picture"
+                                                allowfullscreen></iframe>
+                                    }
+                                    else if (item.MessageType == "Hyperlink")
+                                    {
+                                        <p class="your-chat-balloon">
+                                            <a style="color:mediumseagreen" target="_blank" href="@Html.DisplayFor(modelItem => item.Word)">@Html.DisplayFor(modelItem => item.Word)</a>
+                                        </p>
+                                    }
+                                    else if (item.MessageType == "Text")
+                                    {
+                                        <p class="your-chat-balloon">@Html.DisplayFor(modelItem => item.Word)</p>
+                                    }
+                                    else if (item.MessageType == "Audio")
+                                    {
+                                        <p class="your-chat-balloon"><audio controls src="@Html.DisplayFor(modelItem => item.Word)"></audio></p>
+                                    }
+                                    else if (item.MessageType == "CamVideo")
+                                    {
+                                        <p class="your-chat-balloon"><video class="your-chat-image" src="@Html.DisplayFor(modelItem => item.Word)" controls></video></p>
+                                    }
+                                    <p class="chat-datetime"><span class="glyphicon glyphicon-ok"></span>@Html.DisplayFor(modelItem => item.CreatedAt)</p>
+                                </div>
+
+                            }
+
+                            else
+                            {
+                                foreach (var chatRoom in item.Chat.Enrollments)
+                                {
+                                    if (chatRoom.User.ID == item.UserID)
+                                    {
+                                        <div id="friends-chat" class="friends-chat">
+                                            <div class="profile friends-chat-photo">
+                                                <img src="@chatRoom.User.ProfilePic" alt="">
+                                            </div>
+                                            <div class="friends-chat-content">
+                                                <p class="friends-chat-name">@Html.DisplayFor(modelItem => chatRoom.User.Name)</p>
+                                                @if (item.MessageType == "Image")
+                                                {
+                                                    <img src="@Html.DisplayFor(modelItem => item.Word)" class="friends-chat-image" />
+                                                }
+                                                else if (item.MessageType == "Document")
+                                                {
+                                                    <p class="friends-chat-balloon"><a href="@Html.DisplayFor(modelItem => item.Word)" style="color:plum;" target="_blank" download="Document">Download the document</a></p>
+                                                }
+                                                else if (item.MessageType == "Video")
+                                                {
+                                                    <iframe class="friends-chat-video" width="400" height="300"
+                                                            src="https://www.youtube.com/embed/@Html.DisplayFor(modelItem => item.AttachmentURL)"
+                                                            frameborder="0"
+                                                            allow="accelerometer; autoplay; clipboard-write; encrypted-media;
+                                                                     gyroscope; picture-in-picture"
+                                                            allowfullscreen></iframe>
+                                                }
+                                                else if (item.MessageType == "Hyperlink")
+                                                {
+                                                    <p class="friends-chat-balloon">
+                                                        <a style="color:mediumseagreen" target="_blank" href="@Html.DisplayFor(modelItem => item.Word)">@Html.DisplayFor(modelItem => item.Word)</a>
+                                                    </p>
+                                                }
+                                                else if (item.MessageType == "Text")
+                                                {
+                                                    <p class="friends-chat-balloon">@Html.DisplayFor(modelItem => item.Word)</p>
+                                                }
+                                                else if (item.MessageType == "Audio")
+                                                {
+                                                    <p class="friends-chat-balloon"><audio controls src="@Html.DisplayFor(modelItem => item.Word)"></audio></p>
+                                                }
+                                                else if (item.MessageType == "CamVideo")
+                                                {
+                                                    <p class="friends-chat-balloon"><video class="friends-chat-image" src="@Html.DisplayFor(modelItem => item.Word)" controls></video></p>
+                                                }
+                                                <h5 class="chat-datetime">@Html.DisplayFor(modelItem => item.CreatedAt)</h5>
+                                            </div>
+                                        </div>
+
+                                    }
+                                }
+                            }
+
+                        }
+
+
+                    }
+                </div>
+
+                <!-- typing area -->
+                <form class="typing-area" id="messageForm" asp-controller="Messages" asp-action="Create" autocomplete="off">
+                    <!-- input form -->
+                    <input id="type-area" asp-for="Message.Word" type="text" class="type-area" placeholder="Type a message">
+                    <input id="chat-id" asp-for="Message.ChatID" value="@Model.Chat.ID" hidden>
+                    <input id="message-type" asp-for="Message.MessageType" hidden>
+                    <input id="video-url" asp-for="Message.AttachmentURL" hidden>
+                    <input type="file" id="file" accept="image/*" hidden>
+                    <input type="file" id="attachment" accept=".docx,.pdf" hidden>
+                    <!-- attachment btn -->
+                    <div class="attach-btn">
+                        <span id="emojiButton">
+                            <i class="bi bi-emoji-smile"></i>
+                        </span>
+                        <span id="document" class="glyphicon glyphicon-paperclip file-btn"></span>
+                        <span id="audioMic" data-toggle="modal" data-target="#micModal">
+                            <i class="bi bi-mic"></i>
+                        </span>
+                        <span id="audioToText" data-toggle="modal" data-target="#audioModal" class="glyphicon glyphicon-text-color"></span>
+                        <span class="glyphicon glyphicon-camera" data-toggle="modal" data-target="#cameraModal" onclick="openCamera()"></span>
+                        <span id="image" class="glyphicon glyphicon-picture"></span>
+                        <span class="glyphicon glyphicon-screenshot" onclick="screenshot()"></span>
+                        <span class="glyphicon glyphicon-facetime-video" data-toggle="modal" data-target="#videoModal"></span>
+
+                    </div>
+                    <!-- send btn -->
+                    <button class="send-btn" type="submit" id="sendButton">
+                        <span class="glyphicon glyphicon-send"></span>
+                    </button>
+                </form>
+            </section>
+            //Modal
+            <div id="uploadimageModal" class="modal" role="dialog">
+                <div class="modal-dialog modal-lg modal-dialog-scrollable" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h4 class="modal-title">Crop Your Image</h4>
+                            <button type="button" class="close" data-dismiss="modal" data-toggle="modal" data-target="#canvasModal">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <div id="image_demo"></div>
+                            <div style="display: flex; place-content: center;">
+                                <button class="btn btn-success" id="rotateLeft" data-deg="-90">Rotate Left</button>
+                                <button class="btn btn-success crop_image ml-3" data-dismiss="modal">Crop</button>
+                                <button class="btn btn-success ml-3" id="rotateRight" data-deg="90">Rotate Right</button>
+                                <button class="btn btn-success ml-3" data-dismiss="modal" data-toggle="modal" data-target="#canvasModal">Cancel</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Canvas Modal -->
+            <div class="modal fade bd-example-modal-lg" id="canvasModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-lg" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="exampleModalLabel">Edit Image</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div id="panel">
+                                <div id="box">
+                                    <div id="pen"></div>
+                                </div>
+
+                                <input type="range" id="size" min="1" max="30" step="1" value="5" list="ticks">
+                                <datalist id="ticks">
+                                    <option value="5"></option>
+                                    <option value="10"></option>
+                                    <option value="15"></option>
+                                    <option value="20"></option>
+                                    <option value="25"></option>
+                                    <option value="30"></option>
+                                </datalist>
+
+                                <input type="color" id="color" list="colors">
+                                <datalist id="colors">
+                                    <option value="#ff0000"></option>
+                                    <option value="#ffa500"></option>
+                                    <option value="#ffff00"></option>
+                                    <option value="#008000"></option>
+                                    <option value="#0000ff"></option>
+                                    <option value="#4b0082"></option>
+                                    <option value="#ee82ee"></option>
+                                    <option value="#000000"></option>
+                                    <option value="#ffffff"></option>
+                                    <option value="#999999"></option>
+                                </datalist>
+
+                                <select id="pens">
+                                    <option value="1">✏️</option>
+                                    <option value="2">🖊️</option>
+                                    <option value="3">🖌️</option>
+                                </select>
+
+                                <select id="dashed">
+                                    <option value="1">一一一一</option>
+                                    <option value="2">- - - - - -</option>
+                                    <option value="3">一  一  一</option>
+                                </select>
+
+                                <input type="file" id="canvasFile" accept="image/*" hidden>
+                                <button class="btn btn-outline-secondary" id="download">💾</button>
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal" id="cropCanvas">Crop</button>
+                                <div id="coord">X: Y:</div>
+
+                            </div>
+                            <span style="display: flex; justify-content: center;">
+                                <canvas id="canvas" width="700" height="500"></canvas>
+                            </span>
+
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                            <button type="button" id="sendCanvas" class="btn btn-primary">Send</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            //Audio to text modal
+            <div class="modal fade" id="audioModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h4 class="modal-title" id="myModalLabel">Audio to text</h4>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        </div>
+                        <div class="modal-body">
+                            <p id="audioText">...</p>
+
+                            <button hidden class="btn btn-primary" id="start-recording" onclick="startRecording()">Recording Start</button>
+                            <button hidden class="btn btn-default" id="stop-recording" onclick="stopRecording()">Stop</button>
+                            <button hidden class="btn btn-default" id="save-recording" onclick="saveRecording()">Save</button>
+                            <button hidden type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" id="audioToTextAgain" class="btn btn-primary">Speak</button>
+                            <button type="button" id="stopAudio" class="btn btn-primary">Stop</button>
+                            <button type="button" id="confirmText" class="btn btn-primary" data-toggle="modal" data-target="#audioModal">Send Text</button>
+                            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            //Capture Camera Modal
+            <div class="modal fade" id="cameraModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h4 class="modal-title" id="myModalLabel">Capture Photo</h4>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="closeCamera()"><span aria-hidden="true">&times;</span></button>
+                        </div>
+                        <div class="modal-body">
+                            <div id="my_camera"></div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-default" data-dismiss="modal" onclick="closeCamera()">Close</button>
+                            <button type="button" data-toggle="modal" data-target="#cameraModal" class="btn btn-primary" onclick="take_snapshot()">Snap photo</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            //Voice Message
+            <div class="modal fade" id="micModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h4 class="modal-title" id="myModalLabel">Voice Message</h4>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        </div>
+                        <div class="modal-body">
+                            <button class="btn btn-primary" id="start-recording" onclick="startRecording2()">Recording Start</button>
+                            <button class="btn btn-default" id="stop-recording" onclick="stopRecording2()">Stop</button>
+                            <button class="btn btn-default" id="save-recording" onclick="saveRecording2()">Save</button>
+                            <div id="record-audio"></div>
+                            <span id="clicks"></span>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                            <button type="button" id="confirmVoice" data-toggle="modal" data-target="#micModal" class="btn btn-primary">Send Message</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+
+            <div class="modal fade" id="userModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-body">
+                            <div class="card">
+                                <div style="display: flex; justify-content: center;">
+                                    <img src="@Model.Chat.ProfilePic" alt="John" style="width:60%; border-radius: 100%;">
+                                </div>
+
+                                <div>
+                                    <h4>@Model.Chat.Title</h4>
+                                    <div class="flex-row">
+                                        <span class="title">Created at: </span>
+                                        <span id="chatDate">@Model.Chat.CreatedAt</span>
+                                    </div>
+
+                                    <div style="margin: 24px 0;">
+                                        <table class="table">
+                                            <tr>
+                                                @foreach (var item in Model.Chat.Enrollments)
+                                                {
+                                                <td>
+                                                    <div style="display: flex; flex-direction: column; align-items: center; width: 50px;">
+                                                        <div class="profile your-photo">
+
+                                                            <img id="profile" src="@item.User.ProfilePic" alt="">
+                                                        </div>
+                                                        <div style="text-align: center; width: 50px;">
+                                                            @Html.DisplayFor(modelItem => item.User.Name)
+                                                        </div>
+                                                    </div>
+
+                                                </td>
+                                                }
+                                            </tr>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="modal fade bd-example-modal-lg" id="videoModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+                <div class="modal-dialog modal-lg" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h4 class="modal-title" id="myModalLabel">Record Video</h4>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        </div>
+                        <div class="modal-body">
+                            <div>
+                                <button class="btn btn-primary" id="start">Start camera</button>
+                                <button class="btn btn-primary" id="record" disabled>Start Recording</button>
+                                <button class="btn btn-primary" id="play" disabled>Play</button>
+                            </div>
+                            <div>
+                                Recording format: <select id="codecPreferences" disabled></select>
+                            </div>
+                            <div>
+                                <p>Echo cancellation: <input type="checkbox" id="echoCancellation"></p>
+                            </div>
+
+                            <div>
+                                <span id="errorMsg"></span>
+                            </div>
+
+                            <video width="720" height="486" id="gum" playsinline autoplay muted></video>
+                            <video width="720" height="486" id="recorded" playsinline></video>
+
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                            <button type="button" id="confirmVideo" data-toggle="modal" data-target="#videoModal" class="btn btn-primary">Send Message</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Trigger Script if Model Chat not null -->
+            <script src="~/js/signalr/dist/browser/signalr.js"></script>
+            <script src="~/js/moment.min.js"></script>
+            <script src="~/js/emojibuttonlistjs.js"></script>
+            <script src="~/js/site.js"></script>
+            <script src="~/js/webcam.js"></script>
+            <script src="~/js/chat.js"></script>
+            <script src="~/js/croppie.min.js"></script>
+            <script src="~/js/croppie.js"></script>
+            <script src="~/js/croppie.js"></script>
+            <script src="~/js/video.js"></script>
+
+            <script src="https://cdn.webrtc-experiment.com/commits.js"></script>
+            <script src="https://cdn.WebRTC-Experiment.com/MediaStreamRecorder.js"></script>
+            <script src="https://cdn.WebRTC-Experiment.com/gumadapter.js"></script>
+
+            <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
+            <script>
+
+
+                var margin = 10,
+                    instance1 = new emojiButtonList("emojiButton", {
+                        dropDownXAlign: "center",
+                        dropDownYAlign: "top",
+                        textBoxID: "type-area",
+                        yAlignMargin: margin,
+                        xAlignMargin: margin
+                    });
+
+                let dateStr = new Date($('#chatDate').text())
+                $('#chatDate').text(dateStr.toLocaleDateString())
+
+                //Crop Image
+                $image_crop = $('#image_demo').croppie({
+                    enableExif: true,
+                    viewport: {
+                        width: 300,
+                        height: 300,
+                        type: 'square'
+                    },
+                    boundary: {
+                        width: 600,
+                        height: 600
+                    },
+                    enableOrientation: true
+                });
+
+                //Upload image Crop
+                $('#file').on('change', function (e) {
+                    var reader = new FileReader();
+                    reader.onload = function (event) {
+                        var img = new Image();
+                        img.onload = function () {
+                            var max_size = 544;
+                            var width = img.width;
+                            var height = img.height;
+
+                            if (width > height) {
+                                if (width > max_size) {
+                                    height *= max_size / width;
+                                    width = max_size;
+                                }
+                            } else {
+                                if (height > max_size) {
+                                    width *= max_size / height;
+                                    height = max_size;
+                                }
+                            }
+                            can.width = width;
+                            can.height = height;
+                            ctx.drawImage(img, 0, 0, width, height);
+                            can.toDataURL
+                        }
+                        img.src = event.target.result;
+                    }
+                    reader.readAsDataURL(e.target.files[0]);
+                    $('#canvasModal').modal('show');
+                    e.target.value = null;
+                });
+
+                //Crop function
+                $('.crop_image').click(async (e) => {
+                    $image_crop.croppie('result', {
+                        type: 'base64',
+                        format: 'jpeg',
+                        //type: 'canvas',
+                        size: 'viewport'
+                        //size: {width: 150, height: 200}
+                    }).then(function (response) {
+
+                        var img = new Image();
+                        img.src = response;
+                        img.onload = function () {
+                            var max_size = 544;
+                            var width = img.width;
+                            var height = img.height;
+
+                            if (width > height) {
+                                if (width > max_size) {
+                                    height *= max_size / width;
+                                    width = max_size;
+                                }
+                            } else {
+                                if (height > max_size) {
+                                    width *= max_size / height;
+                                    height = max_size;
+                                }
+                            }
+                            can.width = width;
+                            can.height = height;
+                            ctx.drawImage(img, 0, 0, width, height);
+                        }
+
+                        $('#uploadimageModal').modal('hide');
+                    });
+                    $('#canvasModal').modal('show');
+
+                });
+
+                $("#rotateLeft").click(function () {
+                    $image_crop.croppie('rotate', parseInt($(this).data('deg')));
+                });
+
+                $("#rotateRight").click(function () {
+                    $image_crop.croppie('rotate', parseInt($(this).data('deg')));
+                });
+
+                $('#micModal').on('hidden.bs.modal', function (e) {
+                    $('#confirmVoice').val("");
+                    $('#audioRecorded').hide();
+                });
+
+
+                $('#videoModal').on('shown.bs.modal', function () {
+                })
+
+
+            </script>
+
+        }
+    </div>
+
+    <div id="creator" class="creator">
+        <p>&copy; 2021 |<span>TaruChat</span></p>
+    </div>
+
+    @section Scripts {
+        @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+        <style>
+            .card {
+                box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+                max-width: 300px;
+                margin: auto;
+                text-align: center;
+                font-family: arial;
+            }
+
+            .title {
+                color: grey;
+                font-size: 18px;
+            }
+        </style>
+
+    }
+
+
+
+</body>
+</html>
